@@ -1,5 +1,6 @@
 from django.shortcuts import render
 # from django.http import HttpResponse
+from .models import Room
 
 
 # Create your views here.
@@ -19,5 +20,5 @@ def room(request, pk):
     for i in rooms:
         if i['id'] == int(pk):
             room == i
-    context = {'room': room}  #SUSPECT //{'rooms':rooms} // + for in loop in rooms.html
+    context = {'room': room}  #SUSPECT //{'rooms':rooms} // + loop in rooms.html
     return render(request, 'base/room.html', context)
