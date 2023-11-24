@@ -1,27 +1,71 @@
 from django.shortcuts import render, redirect
 # from django.http import HttpResponse
-from .models import Room
+from django.contrib import messages
+from .models import Room, Topic
 from .forms import RoomForm
+from django.db.models import Q
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login_required
+
+
 
 
 # Create your views here.
 
-rooms = [{'id':1, 'name': 'Learn python'},
-         {'id':2, 'name': 'Design with me'},
-         {'id':3, 'name': 'Front end developers'}]
+# rooms = [{'id':1, 'name': 'Learn python'},
+#          {'id':2, 'name': 'Design with me'},
+#          {'id':3, 'name': 'Front end developers'}]
+
+def loginPage(request):
+    # username = []
+    # username = ''
+    # password = []
+    # password = ''
+
+    if request.method == 'POST':
+        username == request.POST.get('username')
+        password == request.POST.get('password')
+
+        try:
+            user = User.objactes.get(username=username)
+        except:
+            messages.error(request, 'User does not exist')
+
+            user = authenticate(request, username=username, password=password)
+
+            if user is not None:
+                login(request, user)
+                return redirect('home')
+            else:
+                messages.error(request, 'Username or Password does not exist')
+
+    context = { }
+    return render(request, 'base/login_register.html', context)
+
+def logoutUser(request):
+    logout(request)
+    return redirect('home')
 
 def home(request):
     # return HttpResponse("Home") #WHEN ONLY VIEWS IS USED
-    rooms = Room.objects.all()
-    context = {'rooms': rooms}
+    q = request.GET.get('q') if request.GET.get('q') != None else ''
+    rooms = Room.objects.filter(Q(topic__name__icontains=q) |
+                                Q(name__icontains=q) |
+                                Q(description__icontains=q))
+    topics = Topic.objects.all()
+    room_count = rooms.count()
+    context = {'rooms': rooms, 'topics': topics, 'room_count' : room_count}
     return render(request, 'base/home.html', context ) #WHEN TEMPLATES IS USED
 
 def room(request, pk):
     # return HttpResponse("Room")
-    room = None
-    room = Room.objects.get(id=pk)
-    context = {'room': room}  #SUSPECT //{'rooms':rooms} // + loop in rooms.html
+    rooms = None
+    rooms = Room.objects.get(id=pk)
+    context = {'rooms': rooms}  #SUSPECT //{'rooms':rooms} // + loop in rooms.html
     return render(request, 'base/room.html', context)
+
+@login_required(login_required='/login')
 
 def createRoom(request):
     form = RoomForm()  # < forms.py
@@ -36,7 +80,7 @@ def createRoom(request):
     return render(request, 'base/room_form.html', context)    
 
 def updateRoom(request, pk):
-    room = Room.objects.get(id=pk)
+    rooms = Room.objects.get(id=pk)
     form = RoomForm(instance = room)
 
     if request.method == 'POST':
@@ -50,8 +94,8 @@ def updateRoom(request, pk):
 
 def deleteRoom(request, pk): #refer 1
 
-    room = Room.objects.get(id=pk) #2
+    rooms = Room.objects.get(id=pk) #2
     if request.method == 'POST': #3 check method
-        room.delete() #action
+        rooms.delete() #action
         return redirect('home') #2nd action 
     return render(request, 'base/delete.html', {'object':room}) #1 which object
